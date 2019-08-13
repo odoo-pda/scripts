@@ -1,0 +1,14 @@
+#!/bin/bash
+cd ~/dev/odoo
+if [ $# = 1 ]
+	then
+	echo "LAUNCH ODOO with db $1"
+	./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$
+fi
+if [ $# = 2 ]
+then
+	echo "INSTALL/UPDATE ODOO with db $1 and module $2"
+	./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ -i $2
+fi
+
+#!amélioration avec case 8079 ou 8069. repo ps-solucom ou ps-solucom2. Puis pas de repo ps-solucom si pas une db commencant par wave. et demander un repo via read -p 
