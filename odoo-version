@@ -1,5 +1,5 @@
 #! /bin/bash
 #Switch odoo version
-cd ../design-themes && git checkout $1 && git pull && find . -name \*.pyc -delete && git clean -df
-cd ../enterprise && git checkout $1 && git pull && find . -name \*.pyc -delete && git clean -df
-cd ../odoo && git checkout $1 && git pull && find . -name \*.pyc -delete && git clean -dff
+cd ../design-themes && git checkout $1 && git pull && git clean -dfx
+cd ../enterprise && git checkout $1 && git pull && git clean -dfx
+cd ../odoo && git checkout $1 && git pull && git clean -dfx
