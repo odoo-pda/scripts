@@ -20,3 +20,8 @@ then
 		echo "LAUCNH ODOO on port 8079 with db $1 with ps-solucom-2 in addons-path."
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom-2 -d $1 --db-filter=^$1$ --dev=xml --xmlrpc-port=8079
 fi	
+if [ $# = 4 ] && [ $2 = '8079' ]
+then
+		echo "UPDATE ODOO on port 8079 with db $1 and module $4 with ps-solucom-2 in addons-path."
+        ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom-2 -d $1 --db-filter=^$1$ -u $4 --dev=xml --xmlrpc-port=8079
+fi	
