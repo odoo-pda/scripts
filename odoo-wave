@@ -3,25 +3,30 @@ cd ~/dev/odoo
 if [ $# = 1 ]
         then
         echo "LAUNCH ODOO with db $1 with ps-solucom in addons-path."
+        echo ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ --dev=xml
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ --dev=xml
 fi
 if [ $# = 3 ] && [ $2 = '-i' ]
 then
         echo "INSTALL ODOO with db $1 and module $3 with ps-solucom in addons-path."
+        echo ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ -i $3 --dev=xml
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ -i $3 --dev=xml
 fi
 if [ $# = 3 ] && [ $2 = '-u' ]
 then
         echo "UPDATE ODOO with db $1 and module $3 with ps-solucom in addons-path."
+        echo ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ -u $3 --dev=xml
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ -u $3 --dev=xml
 fi
 if [ $# = 2 ] && [ $2 = '8079' ]
 then
 		echo "LAUCNH ODOO on port 8079 with db $1 with ps-solucom-2 in addons-path."
+        echo ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom-2 -d $1 --db-filter=^$1$ --dev=xml --xmlrpc-port=8079
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom-2 -d $1 --db-filter=^$1$ --dev=xml --xmlrpc-port=8079
 fi	
 if [ $# = 4 ] && [ $2 = '8079' ]
 then
 		echo "UPDATE ODOO on port 8079 with db $1 and module $4 with ps-solucom-2 in addons-path."
+        echo ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom-2 -d $1 --db-filter=^$1$ -u $4 --dev=xml --xmlrpc-port=8079
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom-2 -d $1 --db-filter=^$1$ -u $4 --dev=xml --xmlrpc-port=8079
 fi	
