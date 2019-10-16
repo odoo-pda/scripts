@@ -1,17 +1,32 @@
 #!/bin/bash
 cd ~/dev/odoo
+if [ $# = 1 ]
+        then
+        echo "./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons -d $1 --db-filter=^$1$ --dev=xml"
+        ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons -d $1 --db-filter=^$1$ --dev=xml
+fi
 if [ $# = 2 ]
         then
-        echo "LAUNCH ODOO with db $1 with $2 in addons-path."
+        echo "./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/$2 -d $1 --db-filter=^$1$ --dev=xml"
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/$2 -d $1 --db-filter=^$1$ --dev=xml
+fi
+if [ $# = 3 ] && [ $2 = '-i' ]
+        then
+        echo "./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons -d $1 --db-filter=^$1$ -i $3 --dev=xml"
+        ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons -d $1 --db-filter=^$1$ -i $3 --dev=xml
+fi
+if [ $# = 3 ] && [ $2 = '-u' ]
+        then
+        echo "./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons -d $1 --db-filter=^$1$ -u $3 --dev=xml"
+        ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons -d $1 --db-filter=^$1$ -u $3 --dev=xml
 fi
 if [ $# = 4 ] && [ $2 = '-i' ]
 then
-        echo "INSTALL ODOO with db $1 and module $3 with $4 in addons-path."
+        echo "./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/$4 -d $1 --db-filter=^$1$ -i $3 --dev=xml"
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/$4 -d $1 --db-filter=^$1$ -i $3 --dev=xml
 fi
 if [ $# = 4 ] && [ $2 = '-u' ]
 then
-        echo "UPDATE ODOO with db $1 and module $3 with $4 in addons-path."
+        echo "./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/$4 -d $1 --db-filter=^$1$ -u $3 --dev=xml"
         ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/$4 -d $1 --db-filter=^$1$ -u $3 --dev=xml
 fi
