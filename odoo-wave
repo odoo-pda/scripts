@@ -3,8 +3,9 @@ cd ~/dev/odoo
 if [ $# = 1 ]
         then
         echo "LAUNCH ODOO with db $1 with ps-solucom in addons-path."
-        echo ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ --dev=xml
-        ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ --dev=xml
+        echo ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ --dev=xml --limit-time-cpu=6000000 --limit-time-real=6000000
+        ./odoo-bin --addons-path=~/dev/enterprise,~/dev/odoo/addons,~/dev/ps-solucom -d $1 --db-filter=^$1$ --dev=xml --limit-time-cpu=6000000 --limit-time-real=6000000
+#--log-level=critical
 fi
 if [ $# = 3 ] && [ $2 = '-i' ]
 then
