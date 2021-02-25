@@ -21,9 +21,11 @@ odoo_database_model = connection.get_model("openerp.enterprise.database")
 
 ## PART 1 : CHECK TASKS
 upgrade_tasks = task_model.search_read([('project_id', '=', 70), ('stage_id', 'not in', (1241, 898)), ('create_date', '>', '2020-12-31')],
-                                        ["partner_id", "id", "name", "mnt_subscription_id", "enterprise_subscription_ids", "description", "create_date"])
+                                        ["partner_id", "id", "name", "mnt_subscription_id", "enterprise_subscription_ids", "description", "create_date",
+                                        "project_id", "user_id"])
 print(len(upgrade_tasks))
 count = 0
+task_ids = []
 
 for task in upgrade_tasks:
 
@@ -66,7 +68,14 @@ for task in upgrade_tasks:
 
         if any(product in (2268, 2579, 2599, 11690, 20875, 20876) for product in products):  # Maintenance of custo products
             count += 1
-            print("Upgrade Issue #%s (%s) for ==%s== Maintenance fee on Subscription %s" % (task.get('id'), task.get('create_date'), partner_name, sub.get('code')))
+            print("Upgrade Issue #%s (%s) for ==%s== Maintenance fee on Subscription %s. Assigned to : %s" % (task.get('id'), task.get('create_date'), partner_name, sub.get('code'), task.get('user_id')))
+            if task.get('user_id') == False:
+                task_ids.append(task.get('id'))
             break
+
+## MOVE TASKS FROM UPGRADE ISSUES TO PSBE CUSTOM UPGRADES
+tasks_to_update = task_model.search([('id', 'in', task_ids)])
+print("MOVED TASKS : %s" % (tasks_to_update))
+task_model.write(tasks_to_update, {'project_id': 4157})
 
 print("Custom Upgrade Tasks --------", count)
