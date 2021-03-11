@@ -33,37 +33,32 @@ for task in upgrade_tasks:
     #1 : mnt_subscription_id
     subscription_ids = [task.get('mnt_subscription_id')[0]] if task.get('mnt_subscription_id') else []
 
-    #2: contract number on description
-    try:
-        contract_number = re.search('<br>Contract number: (.+?)(<br>|</p>)', task.get('description')).group(1) if task.get('description') else False
-        contract_id = sub_model.search_read([('code', '=', contract_number)], ["id"])
-        subscription_ids.append(contract_id[0]['id']) if contract_id and contract_id[0]['id'] not in subscription_ids else None
-    except AttributeError:
-        pass
+    # #2: contract number on description
+    # try:
+    #     contract_number = re.search('<br>Contract number: (.+?)(<br>|</p>)', task.get('description')).group(1) if task.get('description') else False
+    #     contract_id = sub_model.search_read([('code', '=', contract_number)], ["id"])
+    #     subscription_ids.append(contract_id[0]['id']) if contract_id and contract_id[0]['id'] not in subscription_ids else None
+    # except AttributeError:
+    #     pass
 
-    #3 : code on enterprise_subscription_ids
-    active_subs = sub_model.search_read([('id', 'in', task.get('enterprise_subscription_ids')),('state', '=', 'open')], ["id"])
-    for active_sub in active_subs:
-        subscription_ids.append(active_sub.get('id')) if active_sub.get('id') not in subscription_ids else None
+    # #3 : code on enterprise_subscription_ids
+    # active_subs = sub_model.search_read([('id', 'in', task.get('enterprise_subscription_ids')),('state', '=', 'open')], ["id"])
+    # for active_sub in active_subs:
+    #     subscription_ids.append(active_sub.get('id')) if active_sub.get('id') not in subscription_ids else None
 
 
-    # 4: database name on description
-    try:
-        database_name = re.search('(Dbname:|Extra dbname:) (.+?)(<br>|</p>)', task.get('description')).group(2) if task.get('description') else False
-        db_contracts = odoo_database_model.search_read([('db_name', '=', database_name.split('.odoo.com')[0])], ["subscription_id"])
-        for db_contract in db_contracts:
-            if db_contract.get('subscription_id'):
-                subscription_ids.append(db_contract.get('subscription_id')[0]) if db_contract.get('subscription_id')[0] not in subscription_ids else None
-    except AttributeError:
-        pass
+    # # 4: database name on description
+    # try:
+    #     database_name = re.search('(Dbname:|Extra dbname:) (.+?)(<br>|</p>)', task.get('description')).group(2) if task.get('description') else False
+    #     db_contracts = odoo_database_model.search_read([('db_name', '=', database_name.split('.odoo.com')[0])], ["subscription_id"])
+    #     for db_contract in db_contracts:
+    #         if db_contract.get('subscription_id'):
+    #             subscription_ids.append(db_contract.get('subscription_id')[0]) if db_contract.get('subscription_id')[0] not in subscription_ids else None
+    # except AttributeError:
+    #     pass
 
     if not subscription_ids:
         continue
-
-    if not task.get('mnt_subscription_id'):
-        print(task)
-        print(subscription_ids[0])
-        #task_model.write({'mnt_subscription_id: subscription_ids[0]})
 
     ## PART 2 : CHECK SUBSCRIPTIONS FOREACH TASK
     be_team_subs = sub_model.search_read([('id', 'in', subscription_ids), ('team_id', 'in', [8, 35, 63, 106, 125])],  # BE teams (except partnership)
