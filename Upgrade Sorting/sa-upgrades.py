@@ -23,17 +23,19 @@ for rec in records:
         sub.maintenance_is_paying:
         #TODO Careful! maintenance_is_paying has False positive with Loc X and Adjustment line of -X.
         # Should be checked to avoid Studio custom db.
-        rec['tag_ids'] |= env['project.tags'].search([('name', '=', 'Maintenance')], limit=1)
+        tag_maintenance = env['project.tags'].search([('name', '=', 'Maintenance')], limit=1)
 
         # ADD salesteam tag (Team BE, Team DU, Team HK, Team IN, Team LU, Team US, Team MX)
         if sub.team_id:
             for prefix in ['BE', 'DU', 'HK', 'IN', 'LU', 'US', 'MX']:
                 if sub.team_id.name.startswith(prefix):
                     break
-            rec['tag_ids'] |= env['project.tags'].search([('name', '=', 'Team %s' % prefix)], limit=1)
+            tag_team = env['project.tags'].search([('name', '=', 'Team %s' % prefix)], limit=1)
+
+        rec['tag_ids'] = rec['tag_ids'].union(tag_maintenance, tag_team)
 
     # ADD parent task or CREATE it
-    upgrade_tasks = env['project.task'].search([('project_id', '=', 4403), ('mnt_subscription_id', '!=', False)]) #TODO change for id upgrade project from prod = 4429
+    upgrade_tasks = env['project.task'].search([('project_id', '=', 4403), ('mnt_subscription_id', '!=', False), ('stage_id', '!=', 3255)]) #TODO change for id upgrade project from prod = 4429 and stage Done = X
     parent_task = [task for task in upgrade_tasks if task.mnt_subscription_id == rec.mnt_subscription_id]
 
     if parent_task != [] and not parent_task[0] == rec:
@@ -42,29 +44,32 @@ for rec in records:
         rec['reviewer_id'] = rec.reviewer_id or rec.parent_id.reviewer_id
 
     else:
-        db_version = sub.database_ids.version if sub.database_count == 1 else "X"
-        target_version = "X" #TODO get it from upgrade platform
+        if rec.mnt_subscription_id:
+            db_version = sub.database_ids.version.replace("+e", "") if sub.database_count == 1 else "X"
+            target_version = "X" #TODO get it from upgrade platform
+            db_hosting = sub.database_ids.hosting if sub.database_count == 1 else "X"
+            db_hosting = db_hosting.replace("paas", "sh")
 
-        partner_name = rec.mnt_subscription_id.partner_id.commercial_company_name or \
-                       rec.mnt_subscription_id.partner_id.name or \
-                       rec.partner_id.commercial_company_name or \
-                       rec.partner_id.name
+            partner_name = rec.mnt_subscription_id.partner_id.commercial_company_name or \
+                        rec.mnt_subscription_id.partner_id.name or \
+                        rec.partner_id.commercial_company_name or \
+                        rec.partner_id.name
 
-        custom_stages = {'BE': 3252, 'IN': 3253, 'US': 3254, 'HK': 3254, 'DU': 3254, 'LU': 3254} #TODO stages id from production + add other stages!
-        standard_stage = 3251
+            custom_stages = {'BE': 3252, 'IN': 3253, 'US': 3254, 'HK': 3254, 'DU': 3254, 'LU': 3254} #TODO stages id from production + add other stages!
+            standard_stage = 3251
 
-        parent_task = env['project.task'].create({
-            'name': "[MIG] %s (%s): to %s" % (partner_name, db_version, target_version),
-            'partner_id': rec.partner_id.id,
-            'mnt_subscription_id': rec.mnt_subscription_id.id,
-            'project_id': 4403, #TODO change for id from prod = 4429
-            'stage_id': custom_stages.get(prefix) or standard_stage,
-            'user_id': False,
-            'reviewer_id': False,
-            'tag_ids': rec.tag_ids,
-            'description': "(Upgrade Task automatically created)",
-            })
-        rec['parent_id'] = parent_task.id
+            parent_task = env['project.task'].create({
+                'name': "%s [%s->%s] (%s)" % (partner_name, db_version, target_version, db_hosting),
+                'partner_id': rec.partner_id.id,
+                'mnt_subscription_id': rec.mnt_subscription_id.id,
+                'project_id': 4403, #TODO change for id from prod = 4429
+                'stage_id': custom_stages.get(prefix) or standard_stage,
+                'user_id': False,
+                'reviewer_id': False,
+                'tag_ids': tag_maintenance.union(tag_team),
+                'description': "(Upgrade Task automatically created)",
+                })
+            rec['parent_id'] = parent_task.id
 
     # MOVE to the right project
     custom_projects = {'BE': 4157} #'IN': 3253, 'US': 3254, 'HK': 3254, 'DU': 3254, 'LU': 3254
