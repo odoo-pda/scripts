@@ -17,6 +17,8 @@ for rec in records:
     # ADD tag "Maintenance"
     maintenance_list = [20875, 20876, 11690, 2599, 15505, 2579]
     prefix = False
+    tag_team = tag_maintenance = env['project.tags']
+
 
     if any(product_id in maintenance_list for product_id in products.ids) or \
         any("Customized" in product.name for product in products) or \
