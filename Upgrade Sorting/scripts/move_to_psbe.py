@@ -18,10 +18,11 @@ product_model = connection.get_model("product.product")
 partner_model = connection.get_model("res.partner")
 odoo_database_model = connection.get_model("openerp.enterprise.database")
 
+print("===MOVE TO PSBE===")
 
-## PART 1 : CHECK TASKS #TODO project 70! remove id = 2478596
-upgrade_tasks = task_model.search_read([('project_id', '=', 70), ('stage_id', 'not in', (1241, 898)), ('create_date', '>', '2020-12-31'),
-                                        ('id', 'not in', (2476619, 2456147, 2456150, 2456058))],
+## PART 1 : CHECK TASKS
+upgrade_tasks = task_model.search_read([('project_id', '=', 70), ('stage_id', 'not in', (1241, 898)), ('create_date', '>', '2021-03-15'),
+                                        ('id', 'not in', (2476619, 2456147, 2456150, 2456058, 2486339, 2484324, 2491654, 2498991))],
                                         ["partner_id", "id", "name", "mnt_subscription_id", "enterprise_subscription_ids", "description", "create_date",
                                         "project_id", "user_id"])
 print(len(upgrade_tasks))
@@ -46,7 +47,7 @@ for task in upgrade_tasks:
         sub_lines = sub_line_model.search_read([('id', 'in', sub.get('recurring_invoice_line_ids'))], ["product_id"])
         products = [x['product_id'][0] for x in sub_lines]
 
-        if any(product in (2579, 2599, 11690, 20875, 20876) for product in products) or maintenance_is_paying:  # Maintenance of custo products
+        if any(product in (2579, 18305, 11429) for product in products) or maintenance_is_paying:  # Maintenance of custo products
             count += 1
             to_be_moved = "MV" if not task.get('user_id') else "--"
             print("%s Upgrade Issue %s (%s) for ==%s== Maintenance fee on Subscription %s. Assigned to : %s. New Maintenance LOC : %s" % (to_be_moved, task.get('id'), task.get('create_date'), partner_name, sub.get('code'), task.get('user_id'), maintenance_is_paying))
@@ -58,5 +59,3 @@ for task in upgrade_tasks:
 tasks_to_update = task_model.search([('id', 'in', task_ids)])
 print("%s MOVED TASKS : %s" % (len(tasks_to_update), tasks_to_update))
 task_model.write(tasks_to_update, {'project_id': 4157})
-
-print("Custom Upgrade Tasks --------", count)

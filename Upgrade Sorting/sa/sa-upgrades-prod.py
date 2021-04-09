@@ -25,7 +25,7 @@ for rec in records:
         sub.maintenance_is_paying:
         #TODO Careful! maintenance_is_paying has False positive with Loc X and Adjustment line of -X.
         # Should be checked to avoid Studio custom db.
-        tag_maintenance = env['project.tags'].search([('name', '=', 'Maintenance')], limit=1)
+        tag_maintenance = env['project.tags'].search([('name', '=', 'Maintenance of Customisations')], limit=1)
 
         # ADD salesteam tag (Team BE, Team DU, Team HK, Team IN, Team LU, Team US, Team MX)
         if sub.team_id:
@@ -37,7 +37,7 @@ for rec in records:
         rec['tag_ids'] = rec['tag_ids'].union(tag_maintenance, tag_team)
 
     # ADD parent task or CREATE it
-    upgrade_tasks = env['project.task'].search([('project_id', '=', 4403), ('mnt_subscription_id', '!=', False), ('stage_id', '!=', 3255)]) #TODO change for id upgrade project from prod = 4429 and stage Done = X
+    upgrade_tasks = env['project.task'].search([('project_id', '=', 4429), ('mnt_subscription_id', '!=', False), ('stage_id', '!=', 3255)]) #TODO change for id from prod for stage Done
     parent_task = [task for task in upgrade_tasks if task.mnt_subscription_id == rec.mnt_subscription_id]
 
     if parent_task != [] and not parent_task[0] == rec:
@@ -61,10 +61,10 @@ for rec in records:
             standard_stage = 3251
 
             parent_task = env['project.task'].create({
-                'name': "%s [%s->%s] (%s)" % (partner_name, db_version, target_version, db_hosting),
+                'name': "[UP] %s [%s->%s] (%s)" % (partner_name, db_version, target_version, db_hosting),
                 'partner_id': rec.partner_id.id,
                 'mnt_subscription_id': rec.mnt_subscription_id.id,
-                'project_id': 4403, #TODO change for id from prod = 4429
+                'project_id': 4429,
                 'stage_id': custom_stages.get(prefix) or standard_stage,
                 'user_id': False,
                 'reviewer_id': False,
@@ -74,6 +74,6 @@ for rec in records:
             rec['parent_id'] = parent_task.id
 
     # MOVE to the right project
-    custom_projects = {'BE': 4157} #'IN': 3253, 'US': 3254, 'HK': 3254, 'DU': 3254, 'LU': 3254
-    if custom_projects.get(prefix):
-        rec['project_id'] = custom_projects.get(prefix)
+    custom_projects = {'3252': 4157}
+    if custom_projects.get(parent_task.stage_id):
+        rec['project_id'] = custom_projects.get(parent_task.stage_id)
