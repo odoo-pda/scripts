@@ -21,7 +21,7 @@ odoo_database_model = connection.get_model("openerp.enterprise.database")
 print("===MOVE TO PSBE===")
 
 ## PART 1 : CHECK TASKS
-upgrade_tasks = task_model.search_read([('project_id', '=', 70), ('stage_id', 'not in', (1241, 898)), ('create_date', '>', '2021-03-15'),
+upgrade_tasks = task_model.search_read([('project_id', '=', 70), ('stage_id', 'not in', (1241, 898)), ('create_date', '>', '2021-04-15'),
                                         ('id', 'not in', (2476619, 2456147, 2456150, 2456058, 2486339, 2484324, 2491654, 2498991))],
                                         ["partner_id", "id", "name", "mnt_subscription_id", "enterprise_subscription_ids", "description", "create_date",
                                         "project_id", "user_id"])

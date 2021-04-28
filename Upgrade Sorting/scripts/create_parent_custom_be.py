@@ -22,7 +22,7 @@ tag_model = connection.get_model("project.tags")
 print("===CREATE CUSTOM BE PARENT===")
 
 ## PART 1 : CHECK TASKS
-upgrade_issues = task_model.search_read([('project_id', '=', 4157),('stage_id', 'not in', (373, 365)), ('create_date', '>', '2021-03-15'),
+upgrade_issues = task_model.search_read([('project_id', '=', 4157),('stage_id', 'not in', (373, 365)), ('create_date', '>', '2021-04-15'),
                                         ('mnt_subscription_id', '!=', False), ('parent_id', '=', False)],
                                         ["partner_id", "id", "name", "mnt_subscription_id", "enterprise_subscription_ids", "description", "create_date",
                                         "project_id", "user_id", "tag_ids", "parent_id", "reviewer_id"])

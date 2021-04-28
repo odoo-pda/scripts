@@ -23,15 +23,19 @@ HELP_PROJECT = 49
 
 def has_maintenance(sub):
     #Check Main subscription
-    sub_mnt_adjustment_lines = sub.recurring_invoice_line_ids.filtered_domain([('product_id', '=', MAINTENANCE_ADJUSTMENT)])
-    sub_mnt_products_lines = sub.recurring_invoice_line_ids.filtered_domain(['|', ('product_id', 'in', MAINTENANCE_PRODUCTS), ('name', 'like', 'Customized')])
+    sub_lines = sub.recurring_invoice_line_ids
+    sub_adjustment_lines = sub_lines.filtered_domain([('product_id', '=', MAINTENANCE_ADJUSTMENT)])
+    sub_products_lines = sub_lines.filtered_domain(['|', ('product_id', 'in', MAINTENANCE_PRODUCTS),
+                                                         ('name', 'like', 'Customized')])
     #Check Maintenance subscription
-    mnt_sub_mnt_adjustment_lines = sub.maintenance_subscription_id.recurring_invoice_line_ids.filtered_domain([('product_id', '=', MAINTENANCE_ADJUSTMENT)])
-    mnt_sub_mnt_products_lines = sub.maintenance_subscription_id.recurring_invoice_line_ids.filtered_domain([('product_id', 'in', MAINTENANCE_PRODUCTS)])
+    mtn_sub_lines = sub.maintenance_subscription_id.recurring_invoice_line_ids
+    mnt_sub_adjustment_lines = mtn_sub_lines.filtered_domain([('product_id', '=', MAINTENANCE_ADJUSTMENT)])
+    mnt_sub_products_lines = mtn_sub_lines.filtered_domain([('product_id', 'in', MAINTENANCE_PRODUCTS)])
 
-    sub_maintenance_price = sum(sub_mnt_products_lines.mapped('price_subtotal')) + sum(sub_mnt_adjustment_lines.mapped('price_subtotal'))
-    mnt_sub_maintenance_price = sum(mnt_sub_mnt_products_lines.mapped('price_subtotal')) + sum(mnt_sub_mnt_adjustment_lines.mapped('price_subtotal'))
-    return (sub_maintenance_price + mnt_sub_maintenance_price) > 0
+    main_sub_price = sum(sub_products_lines.mapped('price_subtotal')) + sum(sub_adjustment_lines.mapped('price_subtotal'))
+    mnt_sub_price = sum(mnt_sub_products_lines.mapped('price_subtotal')) + \
+                    sum(mnt_sub_adjustment_lines.mapped('price_subtotal'))
+    return (main_sub_price + mnt_sub_price) > 0
 
 
 def create_parent_task(task, prefix, tag_ids):
