@@ -172,8 +172,7 @@ class OdooXR:
     def create(self, model: str, fields_to_set: dict = {}):
 
         method = 'create'
-        kwargs = {'vals': fields_to_set}
-        return self._call(model, method, kwargs)
+        return self._call(model, method, [fields_to_set])
 
     def search_read(self, model: str, domain: list, fields_to_get: list = []) -> dict:
         """

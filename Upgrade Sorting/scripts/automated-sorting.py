@@ -3,7 +3,7 @@ from tools.password_manager import OePassword
 # import re
 import sys
 
-url = "https://www.odoo.com"
+url = "https://www.test.odoo.com"
 database = 'openerp'
 pm = OePassword()
 oxr = OdooXR(database, url, pm)
@@ -20,21 +20,22 @@ MAINTENANCE_PRODUCTS = [18305, 2579, 11429, 15051]
 MAINTENANCE_ADJUSTMENT = 18306
 PREFIX = ['BE', 'IN', 'US', 'HK', 'DU', 'LU']
 TAGS = {'BE': 23177, 'IN': 23178, 'US': 23181, 'HK': 23179, 'DU': 23180, 'LU': 23183, 'MAINTENANCE': 23193}
-PROJECTS = {'BE': [4157, 1], 'HK': [4578, 5], 'DU': [3147, 14], 'US': [3137, 3]}  # TODO Add 'IN' Company = 2
+PROJECTS = {'BE': [4157, 1], 'HK': [4578, 5], 'DU': [3147, 14], 'US': [3137, 3]}  # TODO Add 'IN' Company = 2 # {Prefix : [Project, Company]}
 STAGES = {'BE': 3271, 'IN': 3272, 'US': 3276, 'HK': 3274, 'DU': 3275, 'STANDARD': 3270}
 EXCLUDED_STAGES = oxr.search('project.task.type', ['|', ('name', 'ilike', 'Cancel'), ('name', 'ilike', 'Done')])
 UPGRADE_PROJECT = 4429
-UPGRADE_ISSUES_PROJECTS = [70, 4157]
+UPGRADE_ISSUES_PROJECTS = [70, ]  # 4157
 HELP_PROJECT = 49
 EXCLUDED_TASKS = [2486339, 2513205]
-DATE = '2021-04-25'
+DATE = '2021-05-01'
+SPECIFIC_IDS = []
 
 
 def has_maintenance(sub):
     # Get subscription lines from main and maintenance subcription
     line_ids = sub.get('recurring_invoice_line_ids')
     if sub.get('maintenance_subscription_id'):
-        mnt_sub = oxr.search_read('sale.subscription', [('id', '=', sub.get('maintenance_subscription_id'))], ['recurring_invoice_line_ids'])
+        mnt_sub = oxr.search_read('sale.subscription', [('id', '=', sub.get('maintenance_subscription_id')[0])], ['recurring_invoice_line_ids'])[0]
         line_ids += mnt_sub.get('recurring_invoice_line_ids')
 
     # Get maintenance related lines amount
@@ -50,20 +51,21 @@ def has_maintenance(sub):
 
 def create_parent_task(sub, task, prefix, tag_ids):
     target_version = db_version = db_hosting = "X"
+
     if sub.get('database_count') and sub.get('database_count') == 1:
-        db = oxr.search('openerp.enterprise.database', [('subscription_id', '=', sub.get('id'))], ['version', 'hosting'])
+        db = oxr.search_read('openerp.enterprise.database', [('subscription_id', '=', sub.get('id'))], ['version', 'hosting'])[0]
         db_version = db.get('version') and db.get('version').replace("+e", "")
         db_hosting = db.get('hosting') and db.get('hosting').replace("paas", "sh")
 
     partner_name = sub.get('partner_id')[1] if sub.get('partner_id')[1] else False
     if sub.get('enterprise_final_customer_id'):
-        partner = oxr.search_read('res.partner', [('id', '=', sub.get('enterprise_final_customer_id')[0])], ['commercial_partner_id'])
-        partner_name = partner.get('commercial_partner_id')[1] if partner.get('commercial_partner_id')[1] else partner_name
+        partner = oxr.search_read('res.partner', [('id', '=', sub.get('enterprise_final_customer_id')[0])], ['commercial_partner_id'])[0]
+        partner_name = partner.get('commercial_partner_id')[1] if partner.get('commercial_partner_id') else partner_name
 
     return oxr.create('project.task', {
         'name': "[UP] %s [%s->%s] (%s)" % (partner_name, db_version, target_version, db_hosting),
         'partner_id': task.get('partner_id')[0] if task.get('partner_id') else False,
-        'mnt_subscription_id': task.mnt_subscription_id.id,
+        'mnt_subscription_id': task.get('mnt_subscription_id')[0],
         'project_id': UPGRADE_PROJECT,
         'stage_id': STAGES.get(prefix) or STAGES.get('STANDARD'),
         'user_id': False,
@@ -75,8 +77,9 @@ def create_parent_task(sub, task, prefix, tag_ids):
 
 tasks = oxr.search_read('project.task',
                         [('project_id', 'in', UPGRADE_ISSUES_PROJECTS), ('stage_id', 'not in', EXCLUDED_STAGES),
-                         ('create_date', '>', DATE), ('id', 'not in', EXCLUDED_TASKS), ('mnt_subscription_id', '!=', False)],
-                         ["partner_id", 'mnt_subscription_id', "description", 'project_id', 'user_id', 'reviewer_id', 'parent_id'])
+                         '|', ('create_date', '>', DATE), ('id', 'in', SPECIFIC_IDS),
+                         ('id', 'not in', EXCLUDED_TASKS), ('mnt_subscription_id', '!=', False)],
+                        ["partner_id", 'mnt_subscription_id', "description", 'project_id', 'user_id', 'reviewer_id', 'parent_id', 'company_id'])
 print(len(tasks))
 
 for task in tasks:
@@ -108,26 +111,31 @@ for task in tasks:
     if task.get('project_id') and task.get('project_id')[0] in UPGRADE_ISSUES_PROJECTS:
         # MOVE TO THE RIGHT PROJECT (UPGRADE ONLY)
         if not task.get('user_id') and prefix in PROJECTS:
-            vals['company_id'] = PROJECTS.get(prefix[1])
-            vals['project_id'] = PROJECTS.get(prefix[0])
-            print("Task %s will be moved into project %s" % (task.get('id'), PROJECTS.get(prefix[0])))
+            if task.get('company_id') != PROJECTS.get(prefix)[1]:
+                vals['company_id'] = PROJECTS.get(prefix)[1]
+            if task.get('project_id') != PROJECTS.get(prefix)[0]:
+                vals['project_id'] = PROJECTS.get(prefix)[0]
+                print("Task %s will be moved into project %s" % (task.get('id'), PROJECTS.get(prefix)[0]))
 
         # SET OR CREATE PARENT TASK (UPGRADE ONLY)
         upgrade_parent = oxr.search_read('project.task',
                                          [('project_id', '=', UPGRADE_PROJECT), ('id', '!=', task.get('id')),
                                           ('mnt_subscription_id', '=', task.get('mnt_subscription_id')[0]), ('stage_id', 'not in', EXCLUDED_STAGES)],
                                          ['user_id', 'reviewer_id'])
-        print(upgrade_parent)
+
         if upgrade_parent and upgrade_parent != []:
-            vals['user_id'] = task.get('user_id')[0] if task.get('user_id') else upgrade_parent[0].get('user_id')[0] if upgrade_parent[0].get('user_id') else False
-            vals['reviewer_id'] = task.get('reviewer_id')[0] if task.get('reviewer_id') else upgrade_parent[0].get('reviewer_id')[0] if upgrade_parent[0].get('reviewer_id') else False
-            vals['parent_id'] = task.get('parent_id')[0] if task.get('parent_id') else upgrade_parent[0].get('id')
+            if not task.get('user_id'):
+                vals['user_id'] = upgrade_parent[0].get('user_id')[0] if upgrade_parent[0].get('user_id') else False
+                if upgrade_parent[0].get('user_id'):
+                    print("Task %s from project %s assigned to %s" % (task.get('id'), task.get('project_id')[1], upgrade_parent[0].get('user_id')[1]))
+            if not task.get('reviewer_id'):
+                vals['reviewer_id'] = upgrade_parent[0].get('reviewer_id')[0] if upgrade_parent[0].get('reviewer_id') else False
+            if not task.get('parent_id'):
+                vals['parent_id'] = upgrade_parent[0].get('id')
         else:
-            print("HERE")
             upgrade_parent = create_parent_task(sub, task, prefix, tag_ids)
-            print(upgrade_parent)
-            #vals['parent_id'] = upgrade_parent
+            vals['parent_id'] = upgrade_parent
             print("Create parent %s for task %s" % (upgrade_parent, task.get('id')))
 
     oxr.write('project.task', [task.get('id')], vals)
-    print("--------------------------")
+    print("".center(100, "-"))

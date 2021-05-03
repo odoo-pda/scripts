@@ -21,18 +21,11 @@ tag_model = connection.get_model("project.tags")
 
 print("===ADD TAGS===")
 
-
-
 ## PART 1 : CHECK TASKS
 upgrade_tasks = task_model.search_read([('project_id', '=', 70),('stage_id', 'not in', (1241, 898)), ('create_date', '>', '2021-04-15'),
                                         ('id', 'not in', (2486339, 2513205))],
                                         ["partner_id", "id", "name", "mnt_subscription_id", "enterprise_subscription_ids", "description", "create_date",
                                         "project_id", "user_id", "tag_ids"])
-
-task_ids = task_model.search([('project_id', '=', 70),('stage_id', 'not in', (1241, 898)), ('create_date', '>', '2021-04-15'), ('id', 'not in', (2486339, 2513205))])
-data = task_model.export_data(task_ids, ["partner_id/.id", "id", "name", "mnt_subscription_id/.id", "enterprise_subscription_ids", "description", "create_date",
-                                        "project_id", "user_id", "mnt_subscription_id/tag_ids/name", "mnt_subscription_id/partner_id", "mnt_subscription_id/code", "mnt_subscription_id/maintenance_is_paying", "mnt_subscription_id/team_id"])
-data['datas']
 print(len(upgrade_tasks))
 count = 0
 task_ids = []
